@@ -4,27 +4,6 @@ case class CabinPrice(cabinCode: String, rateCode: String, price: BigDecimal)
 
 case class BestGroupPrice(cabinCode: String, rateCode: String, price: BigDecimal, rateGroup: String)
 
-// less efficient since it uses nested for loops, first attempt
-def getBestGroupPriceNestedFor(rates: Seq[Rate], prices: Seq[CabinPrice]): Seq[BestGroupPrice] = {
-
-  val uniqueRateGroups: Seq[String] = rates.map(_.rateGroup).distinct
-  val uniqueCabinCodes: Seq[String] = prices.map(_.cabinCode).distinct
-
-  for {
-    cabinCode <- uniqueCabinCodes
-    rateGroup <- uniqueRateGroups
-  } yield {
-    val relevantPrices = prices.filter(cp => cp.cabinCode == cabinCode && rates.exists(r => r.rateGroup == rateGroup && r.rateCode == cp.rateCode))
-
-    val bestPriceOption = relevantPrices.minByOption(_.price)
-
-    bestPriceOption match {
-      case Some(bestPrice) => BestGroupPrice(cabinCode, bestPrice.rateCode, bestPrice.price, rateGroup)
-      case None => BestGroupPrice(cabinCode, "N/A", -1.0, rateGroup)
-    }
-  }
-}
-
 def getBestGroupPrice(rates: Seq[Rate], prices: Seq[CabinPrice]): Seq[BestGroupPrice] = {
   val rateMap: Map[String, String] = rates.map(rate => rate.rateCode -> rate.rateGroup).toMap
 
