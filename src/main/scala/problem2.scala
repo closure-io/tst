@@ -3,24 +3,28 @@ case class Promotion(code: String, notCombinableWith: Seq[String])
 case class PromotionCombo(promotionCodes: Seq[String])
 
 def allCombinablePromotions(allPromotions: Seq[Promotion]): Seq[PromotionCombo] = {
-  val sortedCombos = (1 until (1 << allPromotions.length)).flatMap { mask =>
-      val currentCombo = allPromotions.zipWithIndex.filter {
-        case (_, index) => (mask & (1 << index)) != 0
-      }.map(_._1.code)
+  val promotionMap = allPromotions.map(p => p.code -> p).toMap
 
-      val isInvalidCombo = currentCombo.exists { code =>
-        allPromotions.find(_.code == code).exists(_.notCombinableWith.intersect(currentCombo).nonEmpty)
-      }
+  def isCompatible(combo: Seq[String], promotion: Promotion): Boolean =
+    combo.forall(code =>
+      !promotion.notCombinableWith.contains(code) &&
+        !promotionMap(code).notCombinableWith.contains(promotion.code)
+    )
 
-      if (!isInvalidCombo) Some(PromotionCombo(currentCombo)) else None
+  def generateCombos(promotions: Seq[Promotion]): Seq[Seq[String]] = {
+    promotions.foldLeft(Seq(Seq.empty[String])) { (combos, promotion) =>
+      combos ++ combos.filter(combo => isCompatible(combo, promotion)).map(_ :+ promotion.code)
     }
-    .filter(_.promotionCodes.length >= 2)
-    .sortBy(- _.promotionCodes.length)
-
-  sortedCombos.foldLeft(Seq.empty[PromotionCombo]) { (acc, combo) =>
-    if (acc.exists(c => combo.promotionCodes.toSet.subsetOf(c.promotionCodes.toSet))) acc
-    else acc :+ combo
   }
+
+  generateCombos(allPromotions)
+    .filter(_.length >= 2)
+    .map(PromotionCombo.apply)
+    .sortBy(-_.promotionCodes.length)
+    .foldLeft(Seq.empty[PromotionCombo]) { (acc, combo) =>
+      if (acc.exists(c => combo.promotionCodes.toSet.subsetOf(c.promotionCodes.toSet))) acc
+      else acc :+ combo
+    }
 }
 
 def combinablePromotions(promotionCode: String, allPromotions: Seq[Promotion]): Seq[PromotionCombo] = {
