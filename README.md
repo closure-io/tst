@@ -1,6 +1,6 @@
 # TST Scala Assessment
 
-First pass at TST's take home assessment, written in Scala. 
+First pass at the TST assessment, written in Scala. 
 
 ## Compilation and Running
 
